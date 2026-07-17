@@ -1,10 +1,10 @@
-name: Build ESP32 Firmware
+name: Build ESP32-S3 Firmware
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -12,28 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Setup ESP-IDF
-      uses: espressif/esp-idf-ci-action@v1
-      with:
-        esp_idf_version: v5.4
-        target: esp32s3
-        path: '.'
+      - name: Setup ESP-IDF
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.2.2        # ← 改了下划线 + 稳定版
+          target: esp32s3
 
-    - name: Build firmware
-      shell: bash
-      run: |
-        . $IDF_PATH/export.sh
-        idf.py set-target esp32s3
-        idf.py build
+      - name: Build firmware
+        run: |
+          idf.py build                   # ← 删掉冗余的 set-target
 
-    - name: Upload firmware artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: firmware
-        path: |
-          build/*.bin
-          build/*.elf
-          build/bootloader/*.bin
-          build/partition_table/*.bin
+      - name: Merge bins (可选, OTA 用)
+        run: idf.py merge-bin
+        continue-on-error: true          # 不阻塞主流程
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            build/*.bin
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+          if-no-files-found: warn
