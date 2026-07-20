@@ -10,33 +10,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Setup ESP-IDF
-        uses: espressif/esp-idf-ci-action@v1
-        with:
-          esp_idf_version: v5.2.2        # ← 改了下划线 + 稳定版
-          target: esp32s3
-
-      - name: Build firmware
-        run: |
-          idf.py build                   # ← 删掉冗余的 set-target
-
-      - name: Merge bins (可选, OTA 用)
-        run: idf.py merge-bin
-        continue-on-error: true          # 不阻塞主流程
-
-      - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: firmware
-          path: |
-            build/*.bin
-            build/bootloader/bootloader.bin
-            build/partition_table/partition-table.bin
-          if-no-files-found: warn
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup ESP-IDF
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp-idf-version: v5.4
+        target: esp32s3
+    
+    - name: Build firmware
+      run: |
+        idf.py set-target esp32s3
+        idf.py build
+    
+    - name: Upload firmware artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware
+        path: |
+          build/xiaozhi.bin
+          build/bootloader/bootloader.bin
+          build/partition_table/partition-table.bin
+          build/merged-binary.bin
+        if-no-files-found: warn
